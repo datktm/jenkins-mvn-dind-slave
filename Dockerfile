@@ -6,6 +6,7 @@ ENV JENKINS_REMOTNG_VERSION 2.7.1
 ENV JAVA_VERSION 8u92
 ENV JAVA_ALPINE_VERSION 8.92.14-r1
 ENV MAVEN_VERSION 3.3.9
+ENV PROTOBUF_ALPINE_VERSION 2.6.1-r4
 
 ENV DOCKER_HOST tcp://0.0.0.0:2375
 
@@ -15,7 +16,12 @@ RUN apk --update add \
     bash \
     git \
     sudo \
-    openssh
+    openssh \
+    python \
+    py-pip \
+    protobuf="$PROTOBUF_ALPINE_VERSION" && \
+    \
+    pip install --upgrade awscli
 
 # compile and install jdk 8
 # A few problems with compiling Java from source:
@@ -42,9 +48,9 @@ ENV PATH $PATH:/usr/lib/jvm/java-1.8-openjdk/jre/bin:/usr/lib/jvm/java-1.8-openj
 RUN set -x \
     && apk add --no-cache \
         openjdk8="$JAVA_ALPINE_VERSION" \
-&& [ "$JAVA_HOME" = "$(docker-java-home)" ] 
+&& [ "$JAVA_HOME" = "$(docker-java-home)" ]
 
-# Install maven 
+# Install maven
 RUN wget http://mirror2.shellbot.com/apache/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz && \
     tar -zxf apache-maven-${MAVEN_VERSION}-bin.tar.gz && \
     mv apache-maven-${MAVEN_VERSION} /usr/local && \
@@ -55,7 +61,7 @@ ENV HOME $JENKINS_HOME
 
 # Add jenkins user
 RUN adduser -D -h $JENKINS_HOME -s /bin/sh jenkins jenkins \
-    && chmod a+rwx $JENKINS_HOME 
+    && chmod a+rwx $JENKINS_HOME
 
 # Allow jenkins user to run docker as root
 RUN echo "jenkins ALL=(ALL) NOPASSWD: /usr/local/bin/docker" > /etc/sudoers.d/00jenkins \
